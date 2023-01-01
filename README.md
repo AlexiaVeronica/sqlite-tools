@@ -5,10 +5,10 @@
 ### example
 
 ```python 
-from sqlite_tools import SqliteTools
+import tools_sqlite
 
 if __name__ == '__main__':
-    sql = SqliteTools("test.db")
+    sql = tools_sqlite.SqliteTools("test.db")
     ins_list = [
         {"id": "1", "name": "张三", "age": 18},
         {"id": "2", "name": "李四", "age": 19},
