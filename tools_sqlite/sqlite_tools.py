@@ -1,12 +1,13 @@
 import sqlite3
 import typing
+import pandas as pd
 
 
 class SqliteTools:
 
     def __init__(self, db_path):
         self.db_path = db_path
-        self.conn = sqlite3.connect(self.db_path)
+        self.conn = sqlite3.connect(self.db_path, check_same_thread=False)
         self.cursor = self.conn.cursor()
 
     def sort_table_values(self, table_name: str, table_fields: dict) -> list:
@@ -23,7 +24,7 @@ class SqliteTools:
     def table_fields(self, table_name):
         return [i[1] for i in self.cursor.execute(f"PRAGMA table_info({table_name})")]
 
-    def create_table(self, table_name, table_fields):
+    def create_table(self, table_name: str, table_fields: list):
 
         sql = f"create table if not exists {table_name} ("
 
@@ -78,22 +79,19 @@ class SqliteTools:
             print("主键冲突:", e)
         self.conn.commit()
 
-    def select(self, table_name, table_fields, where=None):
-
+    def select(self, table_name, values: dict = None, where=None):
         sql = f"select * from {table_name}"
-
         if where:
             sql += f" where {where}"
-
-        self.cursor.execute(sql)
-        data = self.cursor.fetchall()
-
-        result = []
-
-        for d in data:
-            result.append(dict(zip(table_fields, d)))
-
-        return result
+        if values:
+            if values.get("order"):
+                sql += f" order by {values.get('order')}"
+            if values.get("limit"):
+                sql += f" limit {values['limit']}"
+            if values.get("offset"):
+                sql += f" offset {values['offset']}"
+        # return self.cursor.execute(sql).fetchall()
+        return pd.read_sql_query(sql, self.conn).to_dict(orient="records", into=dict)
 
     def update(self, table_name, table_fields, data, where=None):
 
@@ -119,6 +117,13 @@ class SqliteTools:
         self.cursor.execute(sql)
         self.conn.commit()
 
+    def get(self, table_name, key_value):
+        where = f"id={key_value}"
+        try:
+            return self.select(table_name, None, where)[0]
+        except IndexError:
+            return None
+
     def close(self):
         self.cursor.close()
         self.conn.close()
@@ -128,4 +133,3 @@ class SqliteTools:
 
     def __enter__(self):
         return self
-
