@@ -22,4 +22,5 @@ if __name__ == '__main__':
     data = {"id": "8888", "name": "十三", "age": 777}
     were = {"id": "11"}
     sql.update("test3", data, were)
-    print(sql.select("test2", {"age": 16}, {"limit": "3"}))
+    sql.insert("test2", {"id": "666", "name": {"id": "8888", "name": "十三", "age": 777}, "age": 28})
+    print(sql.select("test2", {"id": 666, }, {"limit": "3"}))

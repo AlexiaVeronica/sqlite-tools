@@ -1,6 +1,9 @@
 import sqlite3
 import typing
 import pandas as pd
+import json
+
+import ast
 
 
 class SqliteTools:
@@ -14,17 +17,27 @@ class SqliteTools:
         data = []
         for table_name in self.table_fields(table_name):
             value = table_fields.get(table_name)
-            if isinstance(value, dict):
-                value = str(value)
-            if isinstance(value, list):
-                value = str(value)
+            if isinstance(value, dict) or isinstance(value, list):
+                value = json.dumps(value, ensure_ascii=False)
             data.append(value)
         return data
 
     def to_list(self, sql, params=None) -> list:
         if params:
-            return pd.read_sql_query(sql, self.conn, params=params).to_dict(orient="records", into=dict)
-        return pd.read_sql_query(sql, self.conn).to_dict(orient="records", into=dict)
+            res = pd.read_sql_query(sql, self.conn, params=params).to_dict(orient="records", into=dict)
+        else:
+            res = pd.read_sql_query(sql, self.conn).to_dict(orient="records", into=dict)
+        if res:
+            for i in res:
+                for k, v in i.items():
+                    if isinstance(v, str):
+                        if (v.startswith("[") and v.endswith("]")) or \
+                                (v.startswith("{") and v.endswith("}")):
+                            try:
+                                i[k] = ast.literal_eval(v)
+                            except Exception as e:
+                                print("json解析失败:", e, "value:", v)
+            return res
 
     def table_fields(self, table_name):
         return [i[1] for i in self.cursor.execute(f"PRAGMA table_info({table_name})")]
