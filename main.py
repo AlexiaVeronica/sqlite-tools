@@ -28,3 +28,4 @@ if __name__ == '__main__':
         {"id": "ccc", "name": "vvv", "age": 888}
     ], "age": 28})
     print(sql.select("test2", {"age": 28, }, {"limit": "3"}))
+    print(sql.get("test2", "10"))

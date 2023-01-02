@@ -142,10 +142,9 @@ class SqliteTools:
         self.cursor.execute(sql)
         self.conn.commit()
 
-    def get(self, table_name, key_value):
-        where = f"id={key_value}"
+    def get(self, table_name, value:str):
         try:
-            return self.select(table_name, None, where)[0]
+            return self.select(table_name, {"id": value}, None)[0]
         except IndexError:
             return None
 
