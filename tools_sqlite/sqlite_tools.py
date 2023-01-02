@@ -25,15 +25,12 @@ class SqliteTools:
         return [i[1] for i in self.cursor.execute(f"PRAGMA table_info({table_name})")]
 
     def create_table(self, table_name: str, table_fields):
-
         sql = f"create table if not exists {table_name} ("
-
         for field in table_fields:
             if field == "id":  # 如果是id字段则设置为主键
                 sql += f"{field} TEXT PRIMARY KEY,"
             else:
                 sql += f"{field} TEXT,"
-
         sql = sql[:-1] + ")"
 
         self.cursor.execute(sql)
@@ -90,26 +87,26 @@ class SqliteTools:
                 sql += f" limit {values['limit']}"
             if values.get("offset"):
                 sql += f" offset {values['offset']}"
-        # return self.cursor.execute(sql).fetchall()
+
         return pd.read_sql_query(sql, self.conn).to_dict(orient="records", into=dict)
 
     def update(self, table_name, update_fields: dict, where: dict):
         sql = f"update {table_name} set "
         for field in update_fields.keys():
-            sql += f"{field} = {update_fields[field]},"
+            sql += f"{field} = '{update_fields[field]}',"
         sql = sql[:-1]
         # sql += f" where {where}"
         for field in where.keys():
             sql += f" where {field} = {where[field]}"
-
+        print(sql)
         self.cursor.execute(sql)
         self.conn.commit()
 
     def delete(self, table_name, where=None):
-        sql = f"delete from {table_name}"
+        sql = f"delete from {table_name} "
 
         if where:
-            sql += f" where {where}"
+            sql += f"where {where}"
 
         self.cursor.execute(sql)
         self.conn.commit()

@@ -19,4 +19,6 @@ if __name__ == '__main__':
     sql.insert_many("test3", ins_list)
 
     sql.insert("test3", {"id": "11", "name": "王十三", "age": 28})
-
+    data = {"id": "8888", "name": "十三", "age": 777}
+    were = {"id": "11"}
+    sql.update("test3", data, were)
