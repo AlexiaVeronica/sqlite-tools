@@ -24,7 +24,7 @@ class SqliteTools:
     def table_fields(self, table_name):
         return [i[1] for i in self.cursor.execute(f"PRAGMA table_info({table_name})")]
 
-    def create_table(self, table_name: str, table_fields: list):
+    def create_table(self, table_name: str, table_fields):
 
         sql = f"create table if not exists {table_name} ("
 
@@ -93,19 +93,16 @@ class SqliteTools:
         # return self.cursor.execute(sql).fetchall()
         return pd.read_sql_query(sql, self.conn).to_dict(orient="records", into=dict)
 
-    def update(self, table_name, table_fields, data, where=None):
-
+    def update(self, table_name, update_fields: dict, where: dict):
         sql = f"update {table_name} set "
-
-        for field in table_fields:
-            sql += f"{field}=?,"
-
+        for field in update_fields.keys():
+            sql += f"{field} = {update_fields[field]},"
         sql = sql[:-1]
+        # sql += f" where {where}"
+        for field in where.keys():
+            sql += f" where {field} = {where[field]}"
 
-        if where:
-            sql += f" where {where}"
-
-        self.cursor.execute(sql, data)
+        self.cursor.execute(sql)
         self.conn.commit()
 
     def delete(self, table_name, where=None):
