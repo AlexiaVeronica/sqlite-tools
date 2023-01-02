@@ -8,9 +8,14 @@ import ast
 
 class SqliteTools:
 
-    def __init__(self, db_path):
+    def __init__(self, db_path, check_same_thread=False, isolation_level=None, timeout=10):
         self.db_path = db_path
-        self.conn = sqlite3.connect(self.db_path, check_same_thread=False)
+        self.conn = sqlite3.connect(
+            self.db_path,
+            check_same_thread=check_same_thread,
+            isolation_level=isolation_level,
+            timeout=timeout
+        )
         self.cursor = self.conn.cursor()
 
     def sort_table_values(self, table_name: str, table_fields: dict) -> list:
@@ -63,9 +68,9 @@ class SqliteTools:
         # 获取数据库列名称
         try:
             self.cursor.execute(sql, self.sort_table_values(table_name, table_fields))
+            self.conn.commit()
         except sqlite3.IntegrityError as e:
             print("主键冲突:", e)
-        self.conn.commit()
 
     def insert_many(self, table_name, data: typing.List[dict]):
         sql = f"insert into {table_name} values ("
