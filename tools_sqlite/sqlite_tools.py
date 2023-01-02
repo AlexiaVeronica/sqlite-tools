@@ -21,6 +21,11 @@ class SqliteTools:
             data.append(value)
         return data
 
+    def to_list(self, sql, params=None) -> list:
+        if params:
+            return pd.read_sql_query(sql, self.conn, params=params).to_dict(orient="records", into=dict)
+        return pd.read_sql_query(sql, self.conn).to_dict(orient="records", into=dict)
+
     def table_fields(self, table_name):
         return [i[1] for i in self.cursor.execute(f"PRAGMA table_info({table_name})")]
 
@@ -76,10 +81,18 @@ class SqliteTools:
             print("主键冲突:", e)
         self.conn.commit()
 
-    def select(self, table_name, values: dict = None, where=None):
+    def select(self, table_name: str, where: dict, values: dict = None):
         sql = f"select * from {table_name}"
         if where:
-            sql += f" where {where}"
+            sql += f" where "
+            for field in where.keys():
+                if isinstance(where[field], str):
+                    sql += f"{field} = '{where[field]}' and "
+                elif isinstance(where[field], int):
+                    sql += f"{field} = {where[field]} and "
+                else:
+                    raise TypeError(f"不支持的类型:{type(where[field])}")
+            sql = sql[:-4]
         if values:
             if values.get("order"):
                 sql += f" order by {values.get('order')}"
@@ -87,18 +100,18 @@ class SqliteTools:
                 sql += f" limit {values['limit']}"
             if values.get("offset"):
                 sql += f" offset {values['offset']}"
-
-        return pd.read_sql_query(sql, self.conn).to_dict(orient="records", into=dict)
+        sql += ";"
+        # print(sql)
+        return self.to_list(sql)
 
     def update(self, table_name, update_fields: dict, where: dict):
         sql = f"update {table_name} set "
         for field in update_fields.keys():
             sql += f"{field} = '{update_fields[field]}',"
         sql = sql[:-1]
-        # sql += f" where {where}"
         for field in where.keys():
             sql += f" where {field} = {where[field]}"
-        print(sql)
+        # print(sql)
         self.cursor.execute(sql)
         self.conn.commit()
 
